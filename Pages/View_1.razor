@@ -1,0 +1,91 @@
+@page "/"
+@using PtTEST
+@inject IPtTESTService ptTESTService
+
+<div class="row-layout view-1-container">
+    <div class="column-layout group">
+        <h5 class="h5">
+            Task Editor
+        </h5>
+        <IgbGrid Data="ptTESTTasks" PrimaryKey="TaskId" DisplayDensity="DisplayDensity.Cosy" RowEditable="true" AllowFiltering="true" FilterMode="FilterMode.ExcelStyleFilter" AutoGenerate="false" RowAdded="TaskRowAdded" RowDeleted="TaskRowDeleted" RowEditDone="TaskRowEditDone" class="ig-typography grid" view_1-scope>
+            <IgbColumn Field="TaskId" DataType="GridColumnDataType.Number" Header="taskId" Sortable="true" Selectable="false"></IgbColumn>
+            <IgbColumn Field="TaskName" DataType="GridColumnDataType.String" Header="taskName" Sortable="true" Selectable="false"></IgbColumn>
+            <IgbColumn Field="DateAdded" DataType="GridColumnDataType.Date" Header="dateAdded" Sortable="true" Selectable="false"></IgbColumn>
+            <IgbColumn Field="DateUpdated" DataType="GridColumnDataType.Date" Header="dateUpdated" Sortable="true" Selectable="false"></IgbColumn>
+            <IgbColumn Field="DateDue" DataType="GridColumnDataType.Date" Header="dateDue" Sortable="true" Selectable="false"></IgbColumn>
+            <IgbColumn Field="ProjectId" DataType="GridColumnDataType.Number" Header="projectId" Sortable="true" Selectable="false"></IgbColumn>
+            <IgbColumn Field="AssignedToEmail" DataType="GridColumnDataType.String" Header="assignedToEmail" Sortable="true" Selectable="false"></IgbColumn>
+            <IgbColumn Field="Priority" DataType="GridColumnDataType.Number" Header="priority" Sortable="true" Selectable="false"></IgbColumn>
+            <IgbActionStrip>
+                <IgbGridPinningActions></IgbGridPinningActions>
+                <IgbGridEditingActions AddRow="true"></IgbGridEditingActions>
+            </IgbActionStrip>
+        </IgbGrid>
+    </div>
+</div>
+
+@code {
+    private List<Tasks> ptTESTTasks = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        ptTESTTasks = await ptTESTService.GetTasks();
+    }
+
+    private async void TaskRowAdded(IgbRowDataEventArgs args)
+    {
+        var tasks = args.Detail.Data as Tasks;
+        if (tasks != null)
+        {
+            var result = await ptTESTService.PostTasks(tasks);
+            if (result != null)
+            {
+                ptTESTTasks = await ptTESTService.GetTasks() ?? ptTESTTasks;
+                StateHasChanged();
+            }
+            else
+            {
+                // TODO: handle errors here.
+            }
+        }
+    }
+
+    private async void TaskRowDeleted(IgbRowDataEventArgs args)
+    {
+        var tasks = args.Detail.Data as Tasks;
+        if (tasks != null)
+        {
+            var result = await ptTESTService.DeleteTasks(tasks.TaskId.ToString());
+            if (result != null)
+            {
+                ptTESTTasks = await ptTESTService.GetTasks() ?? ptTESTTasks;
+                StateHasChanged();
+            }
+            else
+            {
+                // TODO: handle errors here.
+            }
+        }
+    }
+
+    private async void TaskRowEditDone(IgbGridEditDoneEventArgs args)
+    {
+        if(args.Detail.IsAddRow == false)
+        {
+            var tasks = args.Detail.RowData as Tasks;
+            if (tasks != null)
+            {
+                var result = await ptTESTService.PutTasks(tasks);
+                if (result != null)
+                {
+                    ptTESTTasks = await ptTESTService.GetTasks() ?? ptTESTTasks;
+                    StateHasChanged();
+                }
+                else
+                {
+                    // TODO: handle errors here.
+                }
+            }
+        }
+    }
+}
